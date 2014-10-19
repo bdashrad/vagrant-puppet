@@ -1,0 +1,62 @@
+# Require an apt-get update for all package declarations
+exec { 'apt-update': command => '/usr/bin/apt-get update' }
+Exec['apt-update'] -> Package <| |>
+
+#include common::packages
+
+class vim-stuff {
+  if ! defined(Package['vim']) { package { 'vim': ensure => present } }
+  notify { 'hey ho': require => Package['vim'] }
+}
+class { 'vim-stuff': }
+
+stage { 'last': }
+Stage['main'] -> Stage ['last']
+
+class bad-packages {
+  if ! defined(Package['vim']) { package { 'vim': ensure => absent } }
+}
+class { 'bad-packages': stage => last }
+
+
+$agent_user = 'dude'
+
+common::add_user { $agent_user: }
+
+single_user_rvm::install { $agent_user:
+  rvmrc => 'rvm_trust_rvmrcs_flag=1',
+}
+single_user_rvm::install_ruby { 'ruby-2.0.0-p247': user => $agent_user }
+single_user_rvm::install_ruby { 'ruby-1.9.3-p392': user => $agent_user }
+
+#class { '::teamcity_agent':
+#  user        => $agent_user,
+#  server_url  => 'http://teamcity7.pamediakopes.local/',
+#  agent_name  => $teamcity_agent_name,
+#  own_address => $teamcity_own_address,
+#  own_port    => $teamcity_own_port,
+#  properties  => $teamcity_properties,
+#}
+#
+#file { "/home/${teamcity_user}/.netrc":
+#  content => 'machine git.pamediakopes.local
+#        login redmine
+#        password P@ssw0rd',
+#  require => User[$agent_user],
+#}
+
+#package { "phantomjs": ensure => installed, }
+
+#  if ! defined(Package['git'])              { package { 'git':              ensure => present } }
+#  if ! defined(Package['libsqlite3-0'])     { package { 'libsqlite3-0':     ensure => present } }
+#  if ! defined(Package['build-essential'])  { package { 'build-essential':  ensure => present } }
+#  if ! defined(Package['git-core'])         { package { 'git-core':         ensure => present } }
+#  if ! defined(Package['libxml2-dev'])      { package { 'libxml2-dev':      ensure => present } }
+#  if ! defined(Package['libxslt1-dev'])     { package { 'libxslt1-dev':     ensure => present, alias => 'libxslt-dev' } }
+
+# For capybara-webkit gem
+if ! defined(Package['libqtwebkit-dev']) { package { 'libqtwebkit-dev': ensure => present } }
+# For headless gem
+if ! defined(Package['xvfb'])            { package { 'xvfb': ensure => present } }
+# For selenium-webdriver gem
+if ! defined(Package['iceweasel'])       { package { 'iceweasel': ensure => present } }
